@@ -20,7 +20,7 @@ _model: TextEmbedding | None = None
 def _get_model() -> TextEmbedding:
     global _model
     if _model is None:
-        _model = TextEmbedding(model_name=MODEL_NAME)
+        _model = TextEmbedding(model_name=MODEL_NAME, threads=1)
     return _model
 
 

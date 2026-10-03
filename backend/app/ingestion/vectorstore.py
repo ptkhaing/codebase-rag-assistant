@@ -27,7 +27,7 @@ class VectorStore:
         self._client.delete_collection(COLLECTION_NAME)
         self._collection = self._client.get_or_create_collection(COLLECTION_NAME)
 
-    def add_chunks(self, chunks: list[Chunk], batch_size: int = 64) -> None:
+    def add_chunks(self, chunks: list[Chunk], batch_size: int = 16) -> None:
         """Embeds and stores chunks in batches (embedding many texts at
         once is much faster than one-by-one)."""
         for i in range(0, len(chunks), batch_size):
