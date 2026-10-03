@@ -10,7 +10,7 @@ from pathlib import Path
 import chromadb
 
 from app.ingestion.chunker import Chunk
-from app.ingestion.embedder import embed_texts
+from app.ingestion.embedder import embed_query, embed_texts
 
 DEFAULT_DB_PATH = str(Path(__file__).resolve().parents[2] / "chroma_data")
 COLLECTION_NAME = "code_chunks"
@@ -51,7 +51,7 @@ class VectorStore:
     def query(self, query_text: str, k: int = 10) -> list[dict]:
         """Returns up to k results, each a dict with id, text, metadata,
         and distance (lower = more similar)."""
-        query_embedding = embed_texts([query_text])[0]
+        query_embedding = embed_query(query_text)
         results = self._collection.query(
             query_embeddings=[query_embedding],
             n_results=k,

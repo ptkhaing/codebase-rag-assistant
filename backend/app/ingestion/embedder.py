@@ -1,37 +1,51 @@
-"""Embeds text using fastembed (ONNX-based, no torch dependency).
+"""Embeds text using Cohere's hosted Embed API instead of a local model.
 
-Deliberately not sentence-transformers: that pulls in PyTorch, which is a
-several-hundred-MB install and needs more RAM than Render's free tier
-(512MB) comfortably provides. fastembed's ONNX runtime is lighter on both
-disk and memory, at the cost of a slightly smaller model selection.
-
-NOTE: the first call downloads the model (~130MB) from HuggingFace. This
-needs normal internet access — it will NOT work in a network-sandboxed
-environment, only on a real machine/server.
+Switched from local fastembed (ONNX runtime) because loading an embedding
+model into memory, combined with FastAPI + chromadb, exceeded Render's
+free-tier 512MB RAM limit. An API call has no local memory footprint for
+the model itself -- the trade-off is a network call per request and a
+(generous for this project's scale) free-tier rate limit instead of
+unlimited local inference.
 """
 
-from fastembed import TextEmbedding
+import os
 
-MODEL_NAME = "BAAI/bge-small-en-v1.5"
+import cohere
+from dotenv import load_dotenv
 
-_model: TextEmbedding | None = None
+load_dotenv()
+
+MODEL_NAME = "embed-english-v3.0"
+
+_client: cohere.Client | None = None
 
 
-def _get_model() -> TextEmbedding:
-    global _model
-    if _model is None:
-        _model = TextEmbedding(model_name=MODEL_NAME, threads=1)
-    return _model
+def _get_client() -> cohere.Client:
+    global _client
+    if _client is None:
+        api_key = os.environ.get("COHERE_API_KEY")
+        if not api_key:
+            raise RuntimeError(
+                "COHERE_API_KEY not set. Get a free key from dashboard.cohere.com "
+                "and put it in a .env file in the backend/ folder."
+            )
+        _client = cohere.Client(api_key=api_key)
+    return _client
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
-    """Returns one embedding vector per input text, same order."""
+    """Embeds texts being STORED (documents) -- Cohere's v3 models need a
+    different input_type for stored content vs search queries, for better
+    retrieval quality. Use embed_query() for search-time embedding instead."""
     if not texts:
         return []
-    model = _get_model()
-    return [vec.tolist() for vec in model.embed(texts)]
+    client = _get_client()
+    response = client.embed(texts=texts, model=MODEL_NAME, input_type="search_document")
+    return response.embeddings
 
 
 def embed_query(text: str) -> list[float]:
-    """Convenience wrapper for embedding a single query string."""
-    return embed_texts([text])[0]
+    """Embeds a search QUERY, using the query-specific input_type."""
+    client = _get_client()
+    response = client.embed(texts=[text], model=MODEL_NAME, input_type="search_query")
+    return response.embeddings[0]
