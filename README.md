@@ -17,6 +17,11 @@ The demo is pre-loaded with my own [photo-proofing-app](https://github.com/ptkha
 repo as its indexed corpus — ask it things like *"how does gallery deletion
 work?"* or *"how is the dashboard passcode protected?"*
 
+## Screenshots
+
+<img width="789" height="797" alt="Screenshot 2026-10-06 at 1 00 56 AM" src="https://github.com/user-attachments/assets/a898ee9e-2b1f-42c5-98e8-7e92a9a75996" />
+
+
 ## Architecture
 
 clone repo → chunk (function/class-aware) → embed (Cohere) → store (Chroma)
