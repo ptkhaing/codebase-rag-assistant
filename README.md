@@ -107,3 +107,4 @@ cd rag-frontend
 npm install
 npm run dev
 ```
+## License MIT — see [LICENSE](LICENSE) for details.
